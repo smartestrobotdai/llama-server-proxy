@@ -65,6 +65,7 @@ logger = None
 model_id = None
 model = None
 
+global app
 app = FastAPI()
 
 
@@ -106,10 +107,16 @@ def chat(conv: Conversation):
         return EventSourceResponse(
             chat_stream(user_utt, temperature), ping_message_factory=None
         )
+        
+        
+def get_model_id():
+    print(f'model_id in get_model_id(): {model_id}')
+    return model_id
 
 
 @app.get("/v1/models")
 def models():
+    model_id = 'llama-7b'
     return ModelList(data=[ModelInfo(id=model_id)])
 
 
@@ -155,6 +162,7 @@ def main(
     model_path: Optional[Path] = None,
     log_level: Optional[str] = None,
 ):
+
     with open(models_yml, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
     KNOWN_MODELS = KnownModels.parse_obj(data)
@@ -166,6 +174,7 @@ def main(
         if not model_path.is_absolute():
             model_path = Path(KNOWN_MODELS.model_home) / model_path
     globals()["model_id"] = model_id
+    print('model_id:', model_id)
     globals()["model"] = Model(
         model_path=str(model_path),
         n_ctx=512,
